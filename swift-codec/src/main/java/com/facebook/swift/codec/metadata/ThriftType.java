@@ -228,6 +228,11 @@ public class ThriftType
         return uncoercedType;
     }
 
+    public boolean isException()
+    {
+        return javaType instanceof Class && Exception.class.isAssignableFrom((Class<?>) javaType);
+    }
+
     @Override
     public boolean equals(Object o)
     {

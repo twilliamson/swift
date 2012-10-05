@@ -1,0 +1,87 @@
+generate(name, methods, documentation, types) ::= <<
+<types:{type|<(typeTemplate.(type.protocolType))(type)>}>
+<if(documentation)><docs(documentation)><endif>
+service <name> {
+  <methods:{method|<generateMethod(method)>}; separator="\n\n">
+}
+>>
+
+generateMethod(method) ::= <%
+<if(method.documentation)><docs(method.documentation)><\n><endif>
+<typeName(method.returnType)> <method.name>(
+    <method.parameters:{parameter|<generateField(parameter)>}; separator=", ">
+)
+<if(method.exceptions.keys)>
+    <\n>  throws (
+        <method.exceptions.keys:{id|<id>: <method.exceptions.(id).structMetadata.structName> e<id>}; separator=", ">
+    )
+<endif>
+;
+%>
+
+typeTemplate ::= [
+    "ENUM":"generateEnum",
+    "STRUCT":"generateStruct",
+    default:"ignore"
+]
+
+generateEnum(type) ::= <%
+<generateObject("enum", type.structMetadata)><\n>
+%>
+
+generateStruct(type) ::= <%
+<if(type.exception)>
+    <generateObject("exception", type.structMetadata)>
+<else>
+    <generateObject("struct", type.structMetadata)>
+<endif>
+<\n>
+%>
+
+generateObject(type, metadata) ::= <<
+<if(metadata.documentation)><docs(metadata.documentation)><endif>
+<type> <metadata.structName> {
+  <generateFields(metadata.fields)>
+}
+>>
+
+generateFields(fields) ::= <%
+<fields:{field|
+    <generateField(field)>
+}; separator=",\n">
+%>
+
+generateField(field) ::= <%
+<field.id>: <typeName(field.type)> <field.name>
+%>
+
+ignore(type) ::= ""
+
+typeName(type) ::= "<(fieldTemplate.(type.protocolType))(type)>"
+
+fieldTemplate ::= [
+    "LIST":"listField",
+    "SET":"setField",
+    "MAP":"mapField",
+    "STRUCT":"structField",
+    "ENUM":"structField",
+    default:"otherField"
+]
+
+listField(field) ::= "list\<<field.valueType>>"
+
+setField(field) ::= "set\<<field.valueType>>"
+
+mapField(field) ::= "map\<<field.keyType>, <field.valueType>>"
+
+structField(field) ::= "<field.structMetadata.structName>"
+
+otherField(field) ::= <%
+    <field.protocolType; format="lower">
+%>
+
+docs(documentation) ::= <<
+/**
+<documentation:{line|<\ >*<if(line)> <line><endif>}; separator="\n">
+ */
+>>
