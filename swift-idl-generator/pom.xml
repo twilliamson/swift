@@ -6,26 +6,24 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.facebook.swift</groupId>
-        <artifactId>swift-root</artifactId>
-        <version>0.1-SNAPSHOT</version>
-        <relativePath>../pom.xml</relativePath>
+      <groupId>com.facebook.swift</groupId>
+      <artifactId>swift-root</artifactId>
+      <version>0.3.0-SNAPSHOT</version>
     </parent>
 
-    <groupId>com.facebook.swift</groupId>
     <artifactId>swift-idl-generator</artifactId>
-    <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
-
     <name>${project.artifactId}</name>
-
     <description>Generator for turning swift-annotated services into .idl files</description>
+
+    <properties>
+      <fb.main.basedir>${project.parent.basedir}</fb.main.basedir>
+    </properties>
 
     <dependencies>
         <dependency>
             <groupId>com.facebook.swift</groupId>
             <artifactId>swift-service</artifactId>
-            <version>0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
@@ -34,14 +32,12 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>stringtemplate</artifactId>
-            <version>4.0.2</version>
         </dependency>
 
         <!-- test -->
         <dependency>
             <groupId>com.facebook.swift</groupId>
-            <artifactId>swift-annotator</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <artifactId>swift-generator</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -100,7 +100,7 @@ public class ThriftIdlGenerator
         template.add("includes", includes);
         template.add("namespaces", namespaces);
         template.add("methods", methods);
-        template.add("documentation", metadata.getDocumentation());
+//        template.add("documentation", metadata.getDocumentation());
         template.add("types", getTypes(methods));
         out.println(template.render());
     }
