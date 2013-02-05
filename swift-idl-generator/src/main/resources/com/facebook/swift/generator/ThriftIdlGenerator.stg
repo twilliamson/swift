@@ -1,7 +1,13 @@
-generate(name, methods, documentation, types) ::= <<
+generate(name, extendsClass, includes, namespaces, methods, documentation, types) ::= <<
+<includes:{include|include "<include>"}; separator="\n">
+<if(namespaces)>
+
+<namespaces.keys:{language|namespace <language> <namespaces.(language)>}; separator="\n">
+
+<endif>
 <types:{type|<(typeTemplate.(type.protocolType))(type)>}>
 <if(documentation)><docs(documentation)><endif>
-service <name> {
+service <name> <if(extendsClass)>extends <extendsClass><endif> {
   <methods:{method|<generateMethod(method)>}; separator="\n\n">
 }
 >>
@@ -26,7 +32,10 @@ typeTemplate ::= [
 ]
 
 generateEnum(type) ::= <%
-<generateObject("enum", type.structMetadata)><\n>
+<if(type.enumMetadata.documentation)><docs(type.enumMetadata.documentation)><endif>
+enum <type.enumMetadata.enumName> {
+  <generateFields(type.enumMetadata.fields)>
+}
 %>
 
 generateStruct(type) ::= <%
@@ -68,13 +77,19 @@ fieldTemplate ::= [
     default:"otherField"
 ]
 
-listField(field) ::= "list\<<field.valueType>>"
+listField(field) ::= "list\<<typeName(field.valueType)>>"
 
-setField(field) ::= "set\<<field.valueType>>"
+setField(field) ::= "set\<<typeName(field.valueType)>>"
 
-mapField(field) ::= "map\<<field.keyType>, <field.valueType>>"
+mapField(field) ::= "map\<<typeName(field.keyType)>, <typeName(field.valueType)>>"
 
-structField(field) ::= "<field.structMetadata.structName>"
+structField(field) ::= <%
+    <if(field.structMetadata.structName)>
+        <field.structMetadata.structName>
+    <else>
+        <field.javaType.simpleName>
+    <endif>
+%>
 
 otherField(field) ::= <%
     <field.protocolType; format="lower">

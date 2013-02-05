@@ -17,6 +17,7 @@ package com.facebook.swift.codec.metadata;
 
 import com.facebook.swift.codec.ThriftProtocolType;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
 import com.google.common.reflect.TypeParameter;
 import com.google.common.reflect.TypeToken;
 

@@ -4,19 +4,23 @@ import com.facebook.swift.codec.ThriftDocumentation;
 import com.facebook.swift.codec.ThriftField;
 import com.facebook.swift.codec.ThriftStruct;
 import com.facebook.swift.codec.metadata.ThriftCatalog;
+import com.facebook.swift.generator.puma.PumaService;
+import com.facebook.swift.service.ThriftException;
 import com.facebook.swift.service.ThriftMethod;
 import com.facebook.swift.service.ThriftService;
+import com.google.common.io.CharStreams;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Named;
 import java.io.ByteArrayOutputStream;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 
 public class TestThriftIdlGenerator
 {
     @Test
-    public void testIdlGeneration()
+    public void testIdlGeneration() throws Exception
     {
         ThriftIdlGenerator generator = new ThriftIdlGenerator(SomeService.class, new ThriftCatalog());
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -24,35 +28,25 @@ public class TestThriftIdlGenerator
         generator.generate(new PrintStream(out));
 
         String actual = out.toString();
-        String expected = "/**\n" +
-                " * This is a test struct\n" +
-                " */\n" +
-                "struct SomeStruct {\n" +
-                "  1: string foo,\n" +
-                "  2: double bar\n" +
-                "}\n" +
-                "\n" +
-                "exception SomeException {\n" +
-                "  1: string message\n" +
-                "}\n" +
-                "\n" +
-                "/**\n" +
-                " * This is a test service\n" +
-                " */\n" +
-                "service MyTestService {\n" +
-                "  SomeStruct complex(1: SomeStruct foo, 2: string bar, 3: i32 hello);\n" +
-                "\n" +
-                "  /**\n" +
-                "   * This method has arguments\n" +
-                "   * (and a multi-line comment)\n" +
-                "   */\n" +
-                "  string hasArguments(1: i32 foo, 2: string bar);\n" +
-                "\n" +
-                "  i64 simple();\n" +
-                "\n" +
-                "  double throwsException()\n" +
-                "    throws (1: SomeException e1);\n" +
-                "}\n";
+        String expected = CharStreams.toString(new InputStreamReader(getClass().getResourceAsStream("MyTestService.thrift")));
+
+        Assert.assertEquals(actual, expected);
+    }
+
+    @Test
+    public void testPumaIdlGeneration() throws Exception
+    {
+        ThriftIdlGenerator generator = new ThriftIdlGenerator(PumaService.class, new ThriftCatalog());
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+
+        generator.addInclude("common/fb303/if/fb303.thrift")
+                .setExtendsClass("fb303.FacebookService")
+                .addNamespace("cpp", "facebook.puma")
+                .addNamespace("java", "com.facebook.puma.thrift.generated");
+        generator.generate(new PrintStream(out));
+
+        String actual = out.toString();
+        String expected = CharStreams.toString(new InputStreamReader(getClass().getResourceAsStream("PumaReadService.thrift")));
 
         Assert.assertEquals(actual, expected);
     }
@@ -72,12 +66,19 @@ public class TestThriftIdlGenerator
         @ThriftDocumentation({"This method has arguments", "(and a multi-line comment)"})
         public String hasArguments(@Named("foo") int foo, @Named("bar") String bar);
 
-        @ThriftMethod
-        public SomeStruct complex(@Named("foo") SomeStruct foo, @Named("bar") String bar, @Named("hello") int hello);
+        @ThriftMethod(
+                exception = {
+                        @ThriftException(id = 1, type = SomeException.class),
+                        @ThriftException(id = 4, type = SomeOtherException.class, name = "Other")
+                }
+        )
+        public SomeStruct complex(@Named("foo") SomeStruct foo, @Named("bar") SomeEnum bar, @Named("hello") int hello);
     }
 
+    /**
+     * This is a test struct
+     */
     @ThriftStruct
-    @ThriftDocumentation("This is a test struct")
     @SuppressWarnings("unused")
     public static class SomeStruct
     {
@@ -88,7 +89,7 @@ public class TestThriftIdlGenerator
         }
 
         @ThriftField(2)
-        public double getbar()
+        public double getBar()
         {
             return 0;
         }
@@ -103,5 +104,29 @@ public class TestThriftIdlGenerator
         {
             return null;
         }
+    }
+
+    @ThriftStruct
+    @SuppressWarnings("unused")
+    public static class SomeOtherException extends RuntimeException
+    {
+        /**
+         * Some other message
+         *
+         * @return a message
+         */
+        @ThriftField(1)
+        public String getMessage()
+        {
+            return null;
+        }
+    }
+
+    @ThriftStruct
+    @SuppressWarnings("unused")
+    public static enum SomeEnum
+    {
+        OPTION_1,
+        OPTION_A,
     }
 }
